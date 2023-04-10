@@ -7,7 +7,7 @@
         "src_pattern": "*.tf",
         "dst_path": ".",
         "exclude": [
-          "provider.tf",
+          "providers.tf",
           "variables.tf"
         ]
       },
