@@ -46,7 +46,7 @@ variableGroups:
     visible: true
     variables:
       - trigger_source
-      - trigger_events
+#      - trigger_events
 #      - trigger_execlude_patterns
 #      - trigger_include_patterns
 
@@ -256,11 +256,11 @@ variables:
     required: true
     default: "DEVOPS_CODE_REPOSITORY"
 
-  trigger_events: 
-    type: list
-    title: "Code repo events to type"
-    required: true
-    default: ["PUSH",]
+#  trigger_events:
+#    type: list
+#    title: "Code repo events to type"
+#    required: true
+#    default: ["PUSH",]
 
 #  trigger_include_patterns:
 #    type: list
