@@ -47,8 +47,8 @@ variableGroups:
     variables:
       - trigger_source
       - trigger_events
-      - trigger_execlude_patterns
-      - trigger_include_patterns
+#      - trigger_execlude_patterns
+#      - trigger_include_patterns
 
   - title: "DevOps Build Pipeline Configuration"
     visible: true
@@ -262,17 +262,17 @@ variables:
     required: true
     default: ["PUSH",]
 
-  trigger_include_patterns: 
-    type: list
-    title: "File /folder to include for triggers"
-    required: true
-    default: ["*.tf", "*.yaml", "python_app/*", "helm_chart/*"]
-
-  trigger_execlude_patterns: 
-    type: list
-    title: "File /folder to exclude from triggers"
-    required: true
-    default: ["*.md",]
+#  trigger_include_patterns:
+#    type: list
+#    title: "File /folder to include for triggers"
+#    required: true
+#    default: ["*.tf", "*.yaml", "python_app/*", "helm_chart/*"]
+#
+#  trigger_execlude_patterns:
+#    type: list
+#    title: "File /folder to exclude from triggers"
+#    required: true
+#    default: ["*.md",]
 
   project_logging_config_retention_period_in_days: 
     type: string
