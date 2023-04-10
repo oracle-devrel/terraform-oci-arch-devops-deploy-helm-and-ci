@@ -23,8 +23,8 @@
         "dst": "variables.tf"
       },
       {
-        "src": "orm/provider.tf",
-        "dst": "provider.tf"
+        "src": "orm/providers.tf",
+        "dst": "providers.tf"
       },
       {
         "src_pattern": "config/*"
