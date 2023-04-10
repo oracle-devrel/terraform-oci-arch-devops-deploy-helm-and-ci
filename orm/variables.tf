@@ -182,9 +182,11 @@ variable "trigger_source" {
   default = "DEVOPS_CODE_REPOSITORY"
 }
 variable "trigger_events" {
+  type = list
   default = ["PUSH",]
 }
 variable "trigger_execlude_patterns" {
+  type = list
   default = ["*.md",]
 }
 variable "trigger_include_patterns" {
