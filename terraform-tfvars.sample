@@ -1,0 +1,24 @@
+# Authentication
+tenancy_ocid         = "OCID OF YOUR TENANCY"
+user_ocid            = "OCID OF YOUR USER"
+fingerprint          = "FINGERPRINT"
+private_key_path     = "PATH TO PRIVATE KEY"
+
+# Region
+region = "OCI REGION"
+
+# Compartment
+compartment_ocid = "OCID OF COMPARTMENT"
+
+# OCI User and Authtoken
+oci_user_name       = "*****"
+# For a federated user (single sign-on with an identity provider), enter the username in the following format: TenancyName/Federation/UserName.
+# For example, if you use OCI's identity provider, your login would be, Acme/oracleidentitycloudservice/alice.jones@acme.com.
+#If you are using OCI's direct sign-in, enter the username in the following format: TenancyName/YourUserName. For example, Acme/alice_jones. Your password is the auth token you created previously.
+
+oci_user_authtoken = "****"
+
+#AWS_ACCESS_KEY_ID
+aws_access_key_id = "***"
+#AWS_SECRET_ACCESS_KEY
+aws_access_key = "**="

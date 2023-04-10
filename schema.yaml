@@ -1,0 +1,838 @@
+## Copyright (c) 2023, Oracle and/or its affiliates.
+## All rights reserved. The Universal Permissive License (UPL), Version 1.0 as shown at http://oss.oracle.com/licenses/upl
+
+title: "OCI Devops Deployment with Helm Provenance and Shell Stage"
+stackDescription: "Deployment using Helm chart Provenance abd Shell Stage "
+description: "OCI Devops deployment of Helm charts with Provenance and Container instance via Shell stage"
+schemaVersion: 1.1.0
+version: "20230321"
+locale: "en"
+
+#################
+# Variable Groups
+#################
+variableGroups:
+  - title: General Configuration
+    visible: false
+    variables:
+      - tenancy_ocid
+      - compartment_ocid
+      - user_ocid
+      - fingerprint
+      - private_key_path
+      - region
+
+
+  - title: "Required Configuration"
+    visible: true
+    variables:
+      - oci_username
+      - oci_user_authtoken
+      - aws_access_key
+      - aws_access_key_id
+      - show_advanced
+      - gpg_passphrase
+
+  - title: "DevOps Project Configuration"
+    visible: true
+    variables:
+      - compartment_id
+      - app_name
+      - project_description
+      - project_logging_config_retention_period_in_days
+
+
+  - title: "File based trigger configuration"
+    visible: true
+    variables:
+      - trigger_source
+      - trigger_events
+      - trigger_execlude_patterns
+      - trigger_include_patterns
+
+  - title: "DevOps Build Pipeline Configuration"
+    visible: true
+    variables:
+      - build_pipeline_stage_build_runner_shape_config_memory_in_gbs
+      - build_pipeline_stage_build_runner_shape_config_ocpus
+      - build_runner_type
+      - helm_sign_key
+      - helm_chart_repo
+      - release
+      - helm_release_name
+
+  - title: "DevOps Build Pipeline - Build Stage Configuration"
+    visible: true
+    variables:
+      - repository_default_branch
+      - repository_description
+      - repository_repository_type
+      - build_pipeline_stage_build_pipeline_stage_type
+      - build_pipeline_stage_build_source_collection_items_connection_type
+      - build_pipeline_stage_build_source_collection_items_branch
+      - build_pipeline_stage_build_source_collection_items_name
+      - build_pipeline_stage_build_spec_file
+      - build_pipeline_stage_display_name
+      - build_pipeline_stage_image
+      - build_pipeline_stage_stage_execution_timeout_in_seconds
+      - build_pipeline_stage_wait_criteria_wait_duration
+      - build_pipeline_stage_wait_criteria_wait_type
+
+  - title: "DevOps Build Pipeline - Deliver Stage Configuration"
+    visible: true
+    variables:
+      - deploy_artifact_argument_substitution_mode
+      - docker_image_dynamic_source_type
+      - ocker_image_dynamic_artifact_type
+      - devops_artifact_command_spec_ga_path
+      - devops_artifact_command_spec_ga_version
+      - build_pipeline_stage_deliver_artifact_stage_type
+      - deliver_command_spec_artifact_name
+      - deliver_command_spec_artifact_name_helm
+      - deliver_artifact_stage_display_name
+      - deliver_artiifact_docker_image_dynamic_name
+      - deliver_artiifact_docker_image_static_name
+      - image_static_tag
+
+
+  - title: "DevOps Build Pipeline - Invoke deployment configuration"
+    visible: true
+    variables:
+      - build_pipeline_stage_deploy_stage_type
+      - build_pipeline_stage_is_pass_all_parameters_enabled
+
+  - title: "DevOps Deployment Pipeline Configuration"
+    visible: true
+    variables:
+      - deploy_pipeline_description
+
+  - title: "DevOps Deployment Shell Stage Configuration"
+    visible: true
+    variables:
+      - shellstage_shape
+      - shellstage_memory_in_gbs
+      - shellstage_ocpus
+      - container_repo_name
+
+  - title: "DevOps Deployment Helm Stage Configuration"
+    visible: true
+    variables:
+      - helm_chart_version
+      - container_repo_name_helm
+      - container_repository_is_public
+
+  - title: "Object Storage Configuration"
+    visible: true
+    variables:
+      - bucket_access_type
+      - object_events_enabled
+      - storage_tier
+      - versioning
+
+  - title: Vault Configuration"
+    visible: true
+    variables:
+      - create_new_vault
+      - existing_vault_ocid
+      - existing_masterkey_ocid
+      - vault_vault_type
+      - vault_key_shape_algorithm
+      - key_key_shape_length
+      - vault_key_protection_mode
+
+  - title: "Encryption Settings"
+    description: Policy setting for the stack deployment
+    visible: true
+    variables:
+      - use_encryption_from_oci_vault
+      - create_new_encryption_key
+      - existent_encryption_key_id
+      - create_vault_policies_for_group
+      - user_admin_group_for_vault_policy
+
+  - title: "OKE Cluster Configuration"
+    visible: true
+    variables:
+      - create_new_oke_cluster
+      - existent_oke_cluster_id
+      - create_new_compartment_for_oke
+      - oke_compartment_description
+      - cluster_options_add_ons_is_kubernetes_dashboard_enabled
+      - cluster_options_admission_controller_options_is_pod_security_policy_enabled
+      - cluster_workers_visibility
+      - cluster_endpoint_visibility
+      - k8s_version
+
+  - title: "OKE Worker Nodes Configuration"
+    visible: true
+    variables:
+      - generate_public_ssh_key
+      - public_ssh_key
+      - num_pool_workers
+      - node_pool_name
+      - node_pool_shape
+      - node_pool_node_shape_config_ocpus
+      - node_pool_node_shape_config_memory_in_gbs
+      - image_operating_system
+      - image_operating_system_version
+      - create_dynamic_group_for_nodes_in_compartment
+      - existent_dynamic_group_for_nodes_in_compartment
+      - create_compartment_policies
+      - create_tenancy_policies
+
+#################
+# Output Groups
+#################
+
+
+######################
+# Variable Definitions
+######################
+
+variables:
+
+  # Required
+
+  oci_username: 
+    type: string
+    required: true
+    visibile: true
+    title: "OCI username"
+    description: "For a federated user (single sign-on with an identity provider), enter the username in the following format: TenancyName/Federation/UserName. For example, if you use OCI's identity provider, your login would be, Acme/oracleidentitycloudservice/alice.jones@acme.com. If you are using OCI's direct sign-in, enter the username in the following format: TenancyName/YourUserName. For example, Acme/alice_jones. Your password is the auth token you created previously."
+
+  oci_user_authtoken: 
+    type: password
+    required: true
+    visibile: true
+    title: "OCI user auth token"
+    description: "You can get the auth token from your Profile menu -> click User Settings -> On left side  click *Auth Tokens -> Generate Token"
+
+  aws_access_key_id: 
+    type: password
+    required: true
+    visibile: true
+    title: "OCI Customer Secret Key ID"
+    description: "You can get the auth token from your Profile menu -> click User Settings -> On left side  click *Customer Secret Keys* -> Generate Token"
+
+  aws_access_key: 
+    type: password
+    required: true
+    visibile: true
+    title: "OCI Customer Secret Key"
+    description: "You can get the auth token from your Profile menu -> click User Settings -> On left side  click *Customer Secret Keys* -> Generate Token"
+
+  gpg_passphrase: 
+    title: "A Strong password for GPG Key"
+    description: "The password must be more than 8 characters and include at least one uppercase letter, one lowercase letter, one number, and one of the following special characters: !@#%^*_+-:?.,[]{}"
+    type: password
+    confirmation: true
+    # validate entered value against alphanumeric regular expression
+    pattern: "^(?=.*[!@#%^*_+\\-:?.,\\[\\]\\{\\}])(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?!.*[$\\(\\)]).{8,32}$"
+    required: true
+
+
+  show_advanced: 
+    type: boolean
+    title: "Show advanced options?"
+    description: "Shows advanced options."
+    visible: true
+    default: false
+
+  compartment_id: 
+    type: oci:identity:compartment:id
+    title: "Compartment"
+    description: "The compartment in which to create resources"
+    required: true
+
+  app_name: 
+    type: string
+    title: "A string to prefix your OCI Resources"
+    required: true
+    default: "ociDevops"
+
+  trigger_source: 
+    type: string
+    title: "Version control type"
+    required: true
+    default: "DEVOPS_CODE_REPOSITORY"
+
+  trigger_events: 
+    type: list
+    title: "Code repo events to type"
+    required: true
+    default: ["PUSH",]
+
+  trigger_include_patterns: 
+    type: list
+    title: "File /folder to include for triggers"
+    required: true
+    default: ["*.tf", "*.yaml", "python_app/*", "helm_chart/*"]
+
+  trigger_execlude_patterns: 
+    type: list
+    title: "File /folder to exclude from triggers"
+    required: true
+    default: ["*.md",]
+
+  project_logging_config_retention_period_in_days: 
+    type: string
+    title: "Project Logs retention period"
+    description: "Days to retain logs from the Project."
+    default: 30
+    required: true
+    visible:
+      and:
+        - show_advanced
+
+  build_pipeline_stage_build_runner_shape_config_memory_in_gbs: 
+    type: string
+    title: "Memory for custom build runner"
+    required: true
+    default: 8
+
+  build_pipeline_stage_build_runner_shape_config_ocpus: 
+    type: string
+    title: "OCPU count for custom build runner"
+    required: true
+    default: 2
+
+  build_runner_type: 
+    type: string
+    title: "Type of Build runner"
+    required: true
+    default: "CUSTOM"
+    enum:
+      - "CUSTOM"
+      - "DEFAULT"
+
+  helm_sign_key: 
+    type: string
+    required: true
+    visibile: true
+    title: "A sign in key for helm attestation"
+    description: "Must be same as the one use while creating GPG Keys"
+
+  helm_chart_repo: 
+    type: string
+    required: false
+    visibile: true
+    title: "Helm chart repo"
+    description: "Helm chart repo name"
+    default : "node-helm-package"
+
+  helm_release_name: 
+    type: string
+    required: false
+    visibile: true
+    title: "Helm chart release name "
+    description: "Helm chart release name"
+    default : "ocidevops"
+
+  devops_artifact_command_spec_ga_path: 
+    type: string
+    required: true
+    visibile: true
+    title: "Command Spec configuration path"
+    description: "File path for command specification yaml with in Aritifact registry"
+    default : "commad_spec.yaml"
+
+  devops_artifact_command_spec_ga_version: 
+    type: string
+    required: true
+    visibile: true
+    title: "Command Spec configuration path version"
+    description: "File version for command specification yaml with in Aritifact registry"
+    default : "0.0"
+
+  image_static_tag: 
+    type: string
+    required: true
+    visibile: true
+    title: "A static tag for Container instance image reference"
+    description: "A static tag for Container instance image reference"
+    default : "new"
+
+  shellstage_shape: 
+    type: string
+    required: true
+    visibile: true
+    title: "Compute shape for shell stage"
+    description: "Compute shape for shell stage"
+    default : "CI.Standard.E4.Flex"
+
+  shellstage_memory_in_gbs: 
+    type: string
+    required: false
+    visibile: true
+    title: "Memory for shell stage"
+    description: "Memory for shell stage"
+    default : 1
+
+  helm_chart_version: 
+    type: string
+    required: false
+    visibile: true
+    title: "Helm chart version"
+    description: "Helm chart version"
+
+  shellstage_ocpus: 
+    type: string
+    required: false
+    visibile: true
+    title: "OCPu Counts for shell stage"
+    description: "OCPu Counts for shell stage"
+    default : 1
+
+  bucket_access_type: 
+    type: string
+    required: true
+    visibile: true
+    title: "Access type of object storage bucket"
+    description: "(Optional) (Updatable) The type of public access enabled on this bucket. A bucket is set to NoPublicAccess by default, which only allows an authenticated caller to access the bucket and its contents. When ObjectRead is enabled on the bucket, public access is allowed for the GetObject, HeadObject, and ListObjects operations. When ObjectReadWithoutList is enabled on the bucket, public access is allowed for the GetObject and HeadObject operations."
+    default : "NoPublicAccess"
+
+  create_new_vault:
+    type: boolean
+    title: "Create new OCI Vault?"
+    required: true
+
+  existing_vault_ocid:
+    type: string
+    required: false
+    visible:
+      not:
+        - create_new_vault
+    title: "Existing Vault OCID"
+
+  existing_masterkey_ocid:
+    type: string
+    required: false
+    visible:
+      not:
+        - create_new_vault
+    title: "Existing Vault Master Key OCID"
+
+  vault_vault_type:
+    type: string
+    required: false
+    visible:
+      not:
+        - create_new_vault
+    title: "Existing Vault Master Key OCID"
+
+  vault_key_shape_algorithm:
+    type: string
+    required: false
+    visible:
+      not:
+        - create_new_vault
+    title: "Existing Vault Master Key OCID"
+
+  key_key_shape_length:
+    type: int
+    required: false
+    visible:
+      not:
+        - create_new_vault
+    title: "Existing Vault Master Key OCID"
+
+
+  vault_key_protection_mode:
+    type: string
+    required: false
+    visible:
+      not:
+        - create_new_vault
+    title: "Existing Vault Master Key OCID"
+
+  create_new_oke_cluster: 
+    type: boolean
+    title: "Create new OKE cluster?"
+    required: false
+
+  existent_oke_cluster_id: 
+    type: string
+    required: false
+    visible:
+      not:
+        - create_new_oke_cluster
+    title: "Use existing OKE cluster OCID"
+
+  create_new_compartment_for_oke: 
+    type: boolean
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+    title: "Create new compartment for OKE"
+
+  oke_compartment_description: 
+    type: string
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+    title: "OKE new compartment description"
+
+  cluster_options_add_ons_is_kubernetes_dashboard_enabled: 
+    type: boolean
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+    title: "OKE Cluster Add-ons: Enabled Kubernetes Dashboard?"
+
+  cluster_options_admission_controller_options_is_pod_security_policy_enabled: 
+    type: boolean
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+    title: "OKE Cluster Add-ons: Admission Controler options - Enabled POD Security Policy?"
+
+  cluster_workers_visibility: 
+    type: enum
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+    title: "Choose OKE Worker Nodes visibility type"
+    enum:
+      - "Private"
+      - "Public"
+
+  cluster_endpoint_visibility: 
+    type: enum
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+    title: "Choose OKE API Endpoint visibility type"
+    enum:
+      - "Private"
+      - "Public"
+
+  use_encryption_from_oci_vault: 
+    type: boolean
+    required: false
+    title: "Encrypt using Customer-Managed Keys instead of Oracle Managed Encryption"
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+
+  create_new_encryption_key: 
+    type: boolean
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+        - use_encryption_from_oci_vault
+    title: "Create New Encryption Key?"
+
+  existent_encryption_key_id: 
+    type: string
+    title: "Existent Encryption Key OCID"
+    required: false
+    visible:
+      and:
+        - and:
+            - create_new_oke_cluster
+            - show_advanced
+            - use_encryption_from_oci_vault
+        - not:
+            - create_new_encryption_key
+
+  create_vault_policies_for_group: 
+    type: boolean
+    title: "Create policies for the user group to manage vault and keys"
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+        - use_encryption_from_oci_vault
+        - create_new_encryption_key
+
+  user_admin_group_for_vault_policy: 
+    type: string
+    title: "Specify your group to include the policy"
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+        - use_encryption_from_oci_vault
+        - create_new_encryption_key
+        - create_vault_policies_for_group
+
+  k8s_version: 
+    type: enum
+    enum: # Necessary hardcoded supported versions, as ORM does not retrieve the versions from OKE.
+      - "Latest"
+      - "v1.25.4"
+      - "v1.24.1"
+      - "v1.23.4"
+
+    title: "Kubernetes Version"
+    required: false
+    default: "Latest"
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+
+  generate_public_ssh_key: 
+    type: boolean
+    title: "Auto generate public ssh key?"
+    required: true
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+
+  public_ssh_key: 
+    type: oci:core:ssh:publickey
+    title: "Import your own SSH public key"
+    additionalProps:
+      allowMultiple: true
+    required: false
+    pattern: "((^(ssh-rsa AAAAB3NzaC1yc2|ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNT|ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzOD|ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1Mj|ssh-ed25519 AAAAC3NzaC1lZDI1NTE5|ssh-dss AAAAB3NzaC1kc3)[0-9A-Za-z+\/]+[=]{0,3})( [^,]*)?)(,((ssh-rsa AAAAB3NzaC1yc2|ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNT|ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzOD|ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1Mj|ssh-ed25519 AAAAC3NzaC1lZDI1NTE5|ssh-dss AAAAB3NzaC1kc3)[0-9A-Za-z+\/]+[=]{0,3})( [^,]*)?)*$"
+    visible:
+      and:
+        - and:
+            - create_new_oke_cluster
+            - show_advanced
+        - not:
+            - generate_public_ssh_key
+
+  num_pool_workers: 
+    type: integer
+    title: "Number of Worker Nodes"
+    minimum: 1
+    maximum: 1000
+    required: true
+    visible:
+      and:
+        - create_new_oke_cluster
+
+  node_pool_name: 
+    type: string
+    title: "Node Pool Name"
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+
+  node_pool_shape: 
+    type: oci:core:instanceshape:name
+    title: "Select a shape for the Worker Nodes instances"
+    required: false
+    dependsOn:
+      compartmentId: compartment_ocid
+    visible:
+      and:
+        - create_new_oke_cluster
+
+  node_pool_node_shape_config_ocpus: 
+    type: integer
+    minimum: 1
+    maximum: 64
+    title: "Number of OCPUs"
+    visible:
+      and:
+        - and:
+            - create_new_oke_cluster
+        - or:
+            - eq:
+                - node_pool_shape
+                - "VM.Standard.E4.Flex"
+            - eq:
+                - node_pool_shape
+                - "VM.Standard.A1.Flex"
+
+  node_pool_node_shape_config_memory_in_gbs: 
+    type: integer
+    minimum: 1
+    maximum: 1024
+    title: "Amount of memory (GB)"
+    visible:
+      and:
+        - and:
+            - create_new_oke_cluster
+        - or:
+            - eq:
+                - node_pool_shape
+                - "VM.Standard.E4.Flex"
+            - eq:
+                - node_pool_shape
+                - "VM.Standard.A1.Flex"
+
+  image_operating_system: 
+    type: enum
+    title: "Image OS"
+    enum:
+      - "Oracle Linux"
+    required: false
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+
+  image_operating_system_version: 
+    type: string
+    required: false
+    title: "Image OS Version"
+    visible:
+      and:
+        - create_new_oke_cluster
+        - show_advanced
+ 
+  create_dynamic_group_for_nodes_in_compartment: 
+    type: boolean
+    title: "Create Dynamic Group for Worker Nodes in the Compartment"
+    required: false
+    visible:
+      and:
+        - show_advanced
+
+  existent_dynamic_group_for_nodes_in_compartment: 
+    type: string
+    required: false
+    title: "Existent Dynamic Group"
+    visible:
+      and:
+        - and:
+            - show_advanced
+        - or:
+            - create_compartment_policies
+            - create_tenancy_policies
+        - not:
+            - create_dynamic_group_for_nodes_in_compartment
+
+  create_compartment_policies: 
+    type: boolean
+    title: "Create Compartment Policies"
+    required: false
+    visible:
+      and:
+        - show_advanced
+
+  create_tenancy_policies: 
+    type: boolean
+    title: "Create Tenancy Policies"
+    required: false
+    visible:
+      and:
+        - show_advanced
+
+  project_description: 
+    type: string
+    title: "DevOps Project Description"
+    description: "A short description for the DevOps project"
+    default: "DevOps Project for OKE deployment"
+    required: false
+    visible:
+      and:
+        - show_advanced
+
+  build_pipeline_stage_display_name: 
+    type: string
+    title: "DevOps Build Pipeline Stage Name"
+    description: "Name for the DevOps Build Pipeline Stage"
+    required: false
+    visible: true
+
+  build_pipeline_display_name:
+    type: string
+    title: "DevOps Build Pipeline Display Name"
+    description: "Name for the DevOps Build Pipeline Description"
+    required: false
+    visible: true
+
+  build_pipeline_description:
+    type: string
+    title: "DevOps Build Pipeline Description"
+    description: "A short description for the DevOps Build Pipeline Description"
+    required: false
+    visible: true
+
+  repository_name:
+    type: string
+    title: "DevOps Repository Name"
+    description: "Name for DevOps Repository"
+    required: false
+    visible: true
+
+  repository_default_branch: 
+    type: string
+    title: "DevOps Repository Default Branch"
+    description: "Choose Defaulf Branch for DevOps Repository"
+    required: false
+    visible: true
+
+  repository_description:
+    type: string
+    title: "DevOps Repository Description"
+    description: "A short description for the DevOps Repository"
+    required: false
+    visible: true
+
+  build_pipeline_stage_build_source_collection_items_name:
+    type: string
+    title: "Build Pipeline Build Stage Source Collection Items Name"
+    description: "Build Pipeline Build Stage Source Collection Items Name"
+    required: false
+    visible: true
+
+  build_pipeline_stage_stage_execution_timeout_in_seconds: 
+    required: false
+    title: "DevOps Build Pipeline Stage execution timeout (in sec)"
+    description: "DevOps Build Pipeline Stage execution timeout (in sec)"
+    minimum: 36000
+    maximum: 360000
+    multipleOf: 1
+    default: 36000
+
+  container_repository_is_public: 
+    type: boolean
+    title: "Is Container Repository public?"
+    required: false
+    visible: true
+
+  deliver_artifact_stage_display_name: 
+    type: string
+    title: "Deliver Artifact Stage Display Name"
+    description: "DevOps Build Pipeline Deliver Artifact Stage Display Name"
+    required: false
+    visible: true
+
+  deploy_stage_display_name:
+    type: string
+    title: "Deploy Stage Display Name"
+    description: "DevOps Build Pipeline Deploy Stage Display Name"
+    required: false
+    visible: true
+
+  deploy_pipeline_description: 
+    type: string
+    title: "DevOps Deploy Pipeline Description"
+    description: "A short description for the DevOps Deploy Pipeline"
+    required: false
+    visible: true
+
+  deploy_stage_description:
+    type: string
+    title: "DevOps Deploy Stage Pipeline Description"
+    description: "A short description for the DevOps Deploy Pipeline"
+    required: false
+    visible: true
+
+  build_pipeline_stage_is_pass_all_parameters_enabled: 
+    type: boolean
+    title: "Build Pipeline Stage: is pass all parameters enabled?"
+    description: "DevOps Build Pipeline Deploy Stage - enable passing all parameters."
+    required: false
+    visible: true
+
+ 
