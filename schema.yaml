@@ -26,7 +26,7 @@ variableGroups:
   - title: "Required Configuration"
     visible: true
     variables:
-      - oci_username
+      - oci_user_name
       - oci_user_authtoken
       - aws_access_key
       - aws_access_key_id
@@ -193,7 +193,7 @@ variables:
 
   # Required
 
-  oci_username: 
+  oci_user_name:
     type: string
     required: true
     visibile: true
