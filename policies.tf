@@ -29,7 +29,7 @@ resource "oci_identity_dynamic_group" "devopsgroup3" {
 
 resource "oci_identity_policy" "devopspolicy" {
   provider       = oci.home_region
-  name           = "devops-policies-${var.app_name}"
+  name           = "devops-policies-${var.app_name}-${random_id.tag.hex}"
   description    = "policy created for devops"
   compartment_id = var.compartment_ocid
 

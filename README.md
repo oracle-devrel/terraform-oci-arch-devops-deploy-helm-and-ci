@@ -110,9 +110,12 @@ Deploy:
 TBD
 
 ## Destroy the Deployment
-Delete all the artifacts with in the `OCI Artifact repository` then follow terraform command and destroy.
+
+Before initiating the destroy ,ensure to clean all the resources that are created outside of terraform or resource manager actions.
 
 - Clean all the artifacts from the artifact registry.
+- Clean the objects from object storage bucket.
+- Delete the loadbalancer got created for helm deployment.
 - OCI Vault will be delete as part of terrafrom destroy,validate before the execution.
 - Once all set use  ``terraform destroy`` to delete the resources.
 
