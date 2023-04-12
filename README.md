@@ -49,9 +49,30 @@ and [setup guide](https://www.terraform.io/docs/providers/oci/guides/version-3-u
 
 7. If no further changes are necessary, return to the Stack Details page, click **Terraform Actions**, and select **Apply**.
 
-### Validate the Deployment
+### Validate the deployments.
 
-<TBD>
+#### Container instance deployment via Shell stage
+
+- Use `OCI Console` > `Developer service` > `DevOps` > `Projects`>`Name of the project`.
+- With `Devops Project Resources`>`Build pipeline` > `Pipeline named as <string>_build_containerinstance` > `Start Manual Run`
+- Once all the build stages are completed, From `Devops Project Resources` > `Deployment pipelines`>`Select the pipeline named as deploy_containerinstance_<id>`.
+- Check the deployments > Logs, and fetch the IP address for the application.
+- A detailed instruction can be found [here.](https://github.com/oracle-devrel/oci-devops-examples/tree/main/oci-deployment-examples/oci-devops-deploy-containerinstance)
+
+### Helm chart deployment with provenance and integrity
+
+- Create a 'gpg key' for the helm chart. Ensure to use the same password as that provided during the resources manager or terraform.tfvars.
+- Detailed instructions can be found [here.](https://github.com/oracle-devrel/oci-devops-examples/tree/main/oci-deployment-examples/oci-deployment-with-helm-attestation#gpg-key-setup-for-helm-signing-and-verification)
+- Copy the `base64` formated public key to the vault > secrets > gpg_pub_key.
+- Copy the private key to the OCI Artifact registry repo. Fetch its OCID.
+- Use `OCI Console` > `Developer service` > `DevOps` > `Projects`>`Name of the project`.
+- With `Devops Project Resources`>`Build pipeline` > `Pipeline named as <string>_build_helm`
+- Update the build parameters GPG_ARTIFACT_OCID with the artifact's OCID.
+- Update the build parameter HELM_SIGN_KEY with the `Name-Real` with the gpg-template.txt.
+- Once all is done, do a manual build run. Follow its stages. Switch to the deployment pipeline for the helm.
+- Follow the deployment jobs till it gets finished.
+- Connect to the OKE Cluster and check for the load balancer created under the namespace, the default namespace is Default and the helm release name is ocidevops.
+
 
 ## Deploy Using the Terraform CLI
 
