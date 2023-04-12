@@ -46,7 +46,7 @@ locals {
 
 variable "release" {
   description = "Reference Architecture Release (OCI Architecture Center)"
-  default     = "0.1"
+  default     = "0.0"
 }
 
 ## Devops related variables
