@@ -167,7 +167,7 @@ This project is open source.  Please submit your contributions by forking this r
 - Rahul M R (https://github.com/RahulMR42)
 
 ## License
-Copyright (c) 2023 Oracle and/or its affiliates.
+Copyright (c) 2024 Oracle and/or its affiliates.
 Licensed under the Universal Permissive License (UPL), Version 1.0.
 See [LICENSE](LICENSE) for more details.
 
